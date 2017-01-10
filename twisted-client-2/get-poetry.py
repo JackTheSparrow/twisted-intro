@@ -53,6 +53,15 @@ class PoetryProtocol(Protocol):
 
     poem = ''
     task_num = 0
+    time_to_complete = 10
+
+    def __init__(self):
+        from twisted.internet import reactor
+        self.force_to_stop = reactor.callLater(self.time_to_complete, self.stop_poetry)
+
+    def stop_poetry(self):
+        print('Task {num} is terminated. The time is over.'.format(num=self.task_num))
+        self.transport.loseConnection()
 
     def dataReceived(self, data):
         self.poem += data
@@ -60,6 +69,8 @@ class PoetryProtocol(Protocol):
         print  msg % (self.task_num, len(data), self.transport.getPeer())
 
     def connectionLost(self, reason):
+        if not self.force_to_stop:
+            self.force_to_stop.cancel()
         self.poemReceived(self.poem)
 
     def poemReceived(self, poem):
