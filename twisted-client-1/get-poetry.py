@@ -58,12 +58,16 @@ class PoetrySocket(object):
         self.task_num = task_num
         self.address = address
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(address)
-        self.sock.setblocking(0)
+        try:
+            self.sock.connect(address)
+            self.sock.setblocking(0)
 
-        # tell the Twisted reactor to monitor this socket for reading
-        from twisted.internet import reactor
-        reactor.addReader(self)
+            # tell the Twisted reactor to monitor this socket for reading
+            from twisted.internet import reactor
+            reactor.addReader(self)
+        except socket.error:
+            print("Cannot start task {num}. Server {addr} is not available."
+                  .format(num=self.task_num, addr=self.address))
 
     def fileno(self):
         try:
@@ -122,24 +126,17 @@ def poetry_main():
 
     start = datetime.datetime.now()
 
-    sockets = []
-    for i, addr in enumerate(addresses):
-        try:
-            s = PoetrySocket(i+1, addr)
-            sockets.append(s)
-        except socket.error:
-            print("Can't start task {task_num}. The server {address} is not available."
-                  .format(task_num=i+1, address=addr))
+    sockets = [PoetrySocket(i + 1, addr) for i, addr in enumerate(addresses)]
 
     from twisted.internet import reactor
     reactor.run()
 
     elapsed = datetime.datetime.now() - start
 
-    for _, sock in enumerate(sockets):
-        print 'Task %d: %d bytes of poetry' % (sock.task_num, len(sock.poem))
+    for i, sock in enumerate(sockets):
+        print 'Task %d: %d bytes of poetry' % (i + 1, len(sock.poem))
 
-    print 'Got %d poems in %s' % (len(sockets), elapsed)
+    print 'Got %d poems in %s' % (len(addresses), elapsed)
 
 
 if __name__ == '__main__':
