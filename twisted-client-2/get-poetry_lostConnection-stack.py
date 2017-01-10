@@ -71,7 +71,7 @@ class PoetryProtocol(Protocol):
     def connectionLost(self, reason):
         if not self.force_to_stop:
             self.force_to_stop.cancel()
-            
+
         traceback.print_stack()
 
         self.poemReceived(self.poem)
