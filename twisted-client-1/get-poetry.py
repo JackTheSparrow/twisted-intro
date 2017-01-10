@@ -54,7 +54,7 @@ class PoetrySocket(object):
 
     poem = ''
 
-    def __init__(self, task_num, address):
+    def __init__(self, task_num, address, time_to_complete=10):
         self.task_num = task_num
         self.address = address
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,9 +65,15 @@ class PoetrySocket(object):
             # tell the Twisted reactor to monitor this socket for reading
             from twisted.internet import reactor
             reactor.addReader(self)
+            self.force_to_finish = reactor.callLater(
+                time_to_complete, self.stop_poetry)
         except socket.error:
             print("Cannot start task {num}. Server {addr} is not available."
                   .format(num=self.task_num, addr=self.address))
+
+    def stop_poetry(self):
+        print("Task {num} was terminated. Time to complete the task is over. ". format(num=self.task_num))
+        self.connectionLost("Too long time to complete the task.")
 
     def fileno(self):
         try:
@@ -106,6 +112,7 @@ class PoetrySocket(object):
 
         if not bytes:
             print 'Task %d finished' % self.task_num
+            self.force_to_finish.cancel()
             return main.CONNECTION_DONE
         else:
             msg = 'Task %d: got %d bytes of poetry from %s'
