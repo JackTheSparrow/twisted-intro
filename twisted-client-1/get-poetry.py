@@ -122,17 +122,24 @@ def poetry_main():
 
     start = datetime.datetime.now()
 
-    sockets = [PoetrySocket(i + 1, addr) for i, addr in enumerate(addresses)]
+    sockets = []
+    for i, addr in enumerate(addresses):
+        try:
+            s = PoetrySocket(i+1, addr)
+            sockets.append(s)
+        except socket.error:
+            print("Can't start task {task_num}. The server {address} is not available."
+                  .format(task_num=i+1, address=addr))
 
     from twisted.internet import reactor
     reactor.run()
 
     elapsed = datetime.datetime.now() - start
 
-    for i, sock in enumerate(sockets):
-        print 'Task %d: %d bytes of poetry' % (i + 1, len(sock.poem))
+    for _, sock in enumerate(sockets):
+        print 'Task %d: %d bytes of poetry' % (sock.task_num, len(sock.poem))
 
-    print 'Got %d poems in %s' % (len(addresses), elapsed)
+    print 'Got %d poems in %s' % (len(sockets), elapsed)
 
 
 if __name__ == '__main__':
