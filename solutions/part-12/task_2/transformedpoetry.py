@@ -17,7 +17,7 @@ Run it like this:
 If you are in the base directory of the twisted-intro package,
 you could run it like this:
 
-  python twisted-server-1/transformedpoetry.py --port 11000
+  python solutions/part-12/task_2/transformedpoetry.py --port 11000
 
 to provide poetry transformation on port 11000.
 """
